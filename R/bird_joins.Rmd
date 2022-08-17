@@ -1,0 +1,84 @@
+---
+title: "Birds"
+author: "Amritpal Sandhu"
+date: "2022-08-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+library(lubridate)
+```
+
+
+```{r}
+bird_observations <- read_csv(here::here("data", "52_pp52_birds_1.csv"))
+
+bird_sites <- 
+  read_csv(here::here("data", "52_pp52_sites_1.csv"))
+
+bird_surveys <- 
+  read_csv(here::here("data", "52_pp52_surveys_1.csv"))
+
+bird_taxalist <- 
+  read_csv(here::here("data", "52_pp52_taxalist_1.csv"))
+```
+
+```{r}
+bird_subset <- bird_observations |>
+  filter(species_id %in% c("BHCO", "RWBL")) |>
+  filter(site_id %in% c("LI-W", "NU-C"))
+```
+
+```{r}
+birds_left <- left_join(bird_subset, bird_sites, by = "site_id") |>
+  left_join(bird_taxalist, by = "species_id")
+```
+
+```{r}
+bird_full <- full_join(bird_subset, bird_sites, by = "site_id")
+```
+
+```{r}
+birds_inner <- inner_join(bird_subset, bird_taxalist, by = "species_id")
+
+birds_inner2 <- left_join(bird_subset, bird_taxalist, by = "species_id")
+```
+
+## Task 2
+
+```{r}
+birds <- bird_observations |>
+  rename(bird_obs_notes = notes)
+
+birds_subset2 <- bird_observations |> 
+  left_join(bird_taxalist, by = "species_id") |>
+  left_join(bird_sites, by = "site_id") |> 
+  left_join(bird_surveys, by = c("survey_id", "site_id")) |>
+  select("survey_date", "common_name", "park_name", "bird_count")
+```
+
+```{r}
+birds_df <- bird_observations |>
+  left_join(bird_taxalist, by = "species_id") |>
+  left_join(bird_sites, by = "site_id") |>
+  left_join(bird_surveys, by = c("survey_id", "site_id")) |>
+  select("survey_date", "common_name", "park_name", "bird_count")
+```
+
+```{r}
+survey_month <- birds_df |>
+  mutate(survey_month = lubridate::month(survey_date)) |>
+  mutate(survey_month = as.factor(survey_month))|>
+  relocate(survey_month, .after = survey_date)
+
+birds_observed <- birds_df |>
+  group_by("park_name", "survey_month")
+```
+
